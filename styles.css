@@ -89,6 +89,11 @@ h3 {
   font-size: 1.35rem;
 }
 
+h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
 .lead {
   max-width: 58ch;
   margin: 20px 0 0;
@@ -468,6 +473,42 @@ button:focus-visible {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   padding-top: 8px;
   border-top: 1px solid var(--line);
+}
+
+.owner-section {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.owner-help {
+  margin: 4px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.owner-list {
+  display: grid;
+  gap: 8px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.owner-list-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.owner-list-row p {
+  margin: 3px 0 0;
+  color: var(--muted);
 }
 
 .wide {

@@ -168,6 +168,22 @@
           </label>
           <button id="saveInterestButton" class="secondary-button" type="button">Save interest note</button>
 
+          <section class="owner-section">
+            <div>
+              <h4>People using the list</h4>
+              <p class="owner-help">PINs are hidden for safety. If someone forgets a PIN, delete their account and have them make a new one.</p>
+            </div>
+            <div id="ownerUsersList" class="owner-list"></div>
+          </section>
+
+          <section class="owner-section">
+            <div>
+              <h4>Manage gifts</h4>
+              <p class="owner-help">Delete gifts you no longer want on the list.</p>
+            </div>
+            <div id="ownerGiftsList" class="owner-list"></div>
+          </section>
+
           <form id="giftForm" class="gift-form">
             <label>
               Gift name
@@ -204,7 +220,7 @@
             <button class="primary-button wide" type="submit">Add gift</button>
           </form>
 
-          <button id="resetButton" class="danger-button" type="button">Reset list</button>
+          <button id="resetButton" class="danger-button" type="button">Reset gifts and interests</button>
         </div>
       </dialog>
     </main>

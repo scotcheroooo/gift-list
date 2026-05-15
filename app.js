@@ -98,6 +98,8 @@ const els = {
   ownerPanel: document.querySelector("#ownerPanel"),
   ownerInterest: document.querySelector("#ownerInterest"),
   saveInterestButton: document.querySelector("#saveInterestButton"),
+  ownerUsersList: document.querySelector("#ownerUsersList"),
+  ownerGiftsList: document.querySelector("#ownerGiftsList"),
   giftForm: document.querySelector("#giftForm"),
   giftName: document.querySelector("#giftName"),
   giftPrice: document.querySelector("#giftPrice"),
@@ -215,6 +217,8 @@ function startFirebase() {
           enterApp();
         } else if (!els.giftScreen.classList.contains("hidden")) {
           signOut();
+        } else {
+          renderOwnerLists();
         }
       },
       () => {
@@ -419,6 +423,59 @@ function showOwnerPanel() {
   els.ownerPanel.classList.remove("hidden");
   els.ownerInterest.value = state.interests;
   els.ownerMessage.textContent = "";
+  renderOwnerLists();
+}
+
+function renderOwnerLists() {
+  if (!els.ownerUsersList || !els.ownerGiftsList) return;
+
+  els.ownerUsersList.innerHTML = "";
+  if (!state.users.length) {
+    const emptyUsers = document.createElement("p");
+    emptyUsers.className = "meta";
+    emptyUsers.textContent = "No visitor accounts yet.";
+    els.ownerUsersList.append(emptyUsers);
+  } else {
+    state.users
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((user) => {
+        const row = document.createElement("div");
+        row.className = "owner-list-row";
+        row.innerHTML = `
+          <div>
+            <strong>${escapeHtml(user.name)}</strong>
+            <p>${escapeHtml(user.relation)} - PIN hidden</p>
+          </div>
+          <button class="danger-button delete-user-button" type="button" data-id="${escapeHtml(user.pinHash)}">Delete user</button>
+        `;
+        els.ownerUsersList.append(row);
+      });
+  }
+
+  els.ownerGiftsList.innerHTML = "";
+  if (!state.gifts.length) {
+    const emptyGifts = document.createElement("p");
+    emptyGifts.className = "meta";
+    emptyGifts.textContent = "No gifts on the list yet.";
+    els.ownerGiftsList.append(emptyGifts);
+  } else {
+    state.gifts
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((gift) => {
+        const row = document.createElement("div");
+        row.className = "owner-list-row";
+        row.innerHTML = `
+          <div>
+            <strong>${escapeHtml(gift.name)}</strong>
+            <p>${money(gift.price)} - ${escapeHtml(gift.store)}${gift.bought ? " - bought" : ""}</p>
+          </div>
+          <button class="danger-button delete-gift-button" type="button" data-id="${escapeHtml(gift.id)}">Delete gift</button>
+        `;
+        els.ownerGiftsList.append(row);
+      });
+  }
 }
 
 async function unlockOwner(event) {
@@ -525,6 +582,40 @@ els.saveInterestButton.addEventListener("click", async () => {
     await rootRef.child("interests").set(state.interests);
   }
   render();
+  renderOwnerLists();
+});
+
+els.ownerUsersList.addEventListener("click", async (event) => {
+  const button = event.target.closest(".delete-user-button");
+  if (!button || !ownerSignedIn) return;
+
+  const pinHash = button.dataset.id;
+  state.users = state.users.filter((user) => user.pinHash !== pinHash);
+  if (currentUserHash === pinHash) {
+    currentUserHash = "";
+    localStorage.removeItem(CURRENT_USER_KEY);
+  }
+
+  saveLocalState();
+  if (firebaseReady && rootRef) {
+    await rootRef.child(`users/${pinHash}`).remove();
+  }
+  renderOwnerLists();
+});
+
+els.ownerGiftsList.addEventListener("click", async (event) => {
+  const button = event.target.closest(".delete-gift-button");
+  if (!button || !ownerSignedIn) return;
+
+  const giftId = button.dataset.id;
+  state.gifts = state.gifts.filter((gift) => gift.id !== giftId);
+
+  saveLocalState();
+  if (firebaseReady && rootRef) {
+    await rootRef.child(`gifts/${giftId}`).remove();
+  }
+  render();
+  renderOwnerLists();
 });
 
 els.giftForm.addEventListener("submit", async (event) => {
@@ -553,14 +644,21 @@ els.giftForm.addEventListener("submit", async (event) => {
   }
   els.giftForm.reset();
   render();
+  renderOwnerLists();
 });
 
 els.resetButton.addEventListener("click", async () => {
   if (!ownerSignedIn) return;
-  state = cloneSampleData();
+  const users = state.users;
+  state = {
+    ...cloneSampleData(),
+    users
+  };
   await saveState();
   closeOwner();
-  signOut();
+  if (currentUser()) {
+    enterApp();
+  }
 });
 
 startFirebase();
