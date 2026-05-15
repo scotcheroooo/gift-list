@@ -475,7 +475,7 @@ function renderOwnerLists() {
         row.innerHTML = `
           <div>
             <strong>${escapeHtml(user.name)}</strong>
-            <p>${escapeHtml(user.relation)} - PIN hidden - ${boughtCountForUser(user)} bought</p>
+            <p>${escapeHtml(user.relation)} - ${boughtCountForUser(user)} bought</p>
           </div>
           <button class="danger-button delete-user-button" type="button" data-id="${escapeHtml(user.pinHash)}">Delete user</button>
         `;
