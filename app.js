@@ -744,35 +744,3 @@ if (currentUser()) {
 if (!hasLoadedRemote) {
   render();
 }
-
-// ── Dark mode toggle ──────────────────────────────────────
-(function () {
-  const html = document.documentElement;
-  const btn  = document.getElementById('themeToggle');
-  const saved = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-  // Apply saved preference on load, or follow OS
-  const initial = saved || (prefersDark ? 'dark' : 'light');
-  if (initial === 'dark') html.setAttribute('data-theme', 'dark');
-
-  function update() {
-    const isDark = html.getAttribute('data-theme') === 'dark';
-    btn.textContent = isDark ? 'Light' : 'Dark';
-    btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-  }
-
-  btn.addEventListener('click', function () {
-    const isDark = html.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-      html.setAttribute('data-theme', 'light');
-      localStorage.setItem('theme', 'light');
-    } else {
-      html.setAttribute('data-theme', 'dark');
-      localStorage.setItem('theme', 'dark');
-    }
-    update();
-  });
-
-  update();
-})();
