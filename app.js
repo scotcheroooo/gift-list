@@ -167,7 +167,7 @@ function setSyncStatus(text, mode) {
 
 function startFirebase() {
   if (!hasFirebaseConfig() || !window.firebase) {
-    setSyncStatus("Local draft", "local");
+    setSyncStatus("Offline copy", "local");
     return;
   }
 
@@ -234,7 +234,7 @@ function startFirebase() {
     });
   } catch {
     firebaseReady = false;
-    setSyncStatus("Local draft", "local");
+    setSyncStatus("Offline copy", "local");
   }
 }
 
