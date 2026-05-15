@@ -472,6 +472,14 @@ button:focus-visible {
   margin-top: 16px;
 }
 
+.form-actions,
+.owner-row-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .owner-modal {
   width: min(820px, calc(100% - 32px));
 }

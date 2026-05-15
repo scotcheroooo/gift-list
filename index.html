@@ -209,10 +209,11 @@
               Notes
               <textarea id="giftNote" rows="2" placeholder="Size, color, exact version, or anything helpful"></textarea>
             </label>
-            <button class="primary-button wide" type="submit">Add gift</button>
+            <div class="wide form-actions">
+              <button id="cancelEditButton" class="ghost-button hidden" type="button">Cancel edit</button>
+              <button id="giftSubmitButton" class="primary-button" type="submit">Add gift</button>
+            </div>
           </form>
-
-          <button id="resetButton" class="danger-button" type="button">Reset gifts and interests</button>
         </div>
       </dialog>
     </main>

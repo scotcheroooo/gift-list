@@ -62,6 +62,7 @@ let firebaseReady = false;
 let hasLoadedRemote = false;
 let ownerSignedIn = false;
 let remoteNeedsOwnerSetup = false;
+let editingGiftId = "";
 
 const els = {
   welcomeScreen: document.querySelector("#welcomeScreen"),
@@ -107,7 +108,8 @@ const els = {
   giftUrl: document.querySelector("#giftUrl"),
   giftImage: document.querySelector("#giftImage"),
   giftNote: document.querySelector("#giftNote"),
-  resetButton: document.querySelector("#resetButton")
+  giftSubmitButton: document.querySelector("#giftSubmitButton"),
+  cancelEditButton: document.querySelector("#cancelEditButton")
 };
 
 function cloneSampleData() {
@@ -501,7 +503,10 @@ function renderOwnerLists() {
             <strong>${escapeHtml(gift.name)}</strong>
             <p>${money(gift.price)} - ${escapeHtml(gift.store)}${gift.bought ? " - bought" : ""}</p>
           </div>
-          <button class="danger-button delete-gift-button" type="button" data-id="${escapeHtml(gift.id)}">Delete gift</button>
+          <div class="owner-row-actions">
+            <button class="secondary-button edit-gift-button" type="button" data-id="${escapeHtml(gift.id)}">Edit</button>
+            <button class="danger-button delete-gift-button" type="button" data-id="${escapeHtml(gift.id)}">Delete gift</button>
+          </div>
         `;
         els.ownerGiftsList.append(row);
       });
@@ -513,6 +518,29 @@ function boughtCountForUser(user) {
   return state.gifts.filter(
     (gift) => gift.bought && (gift.boughtByHash === user.pinHash || gift.boughtBy === oldBoughtBy)
   ).length;
+}
+
+function startGiftEdit(giftId) {
+  const gift = state.gifts.find((item) => item.id === giftId);
+  if (!gift) return;
+
+  editingGiftId = giftId;
+  els.giftName.value = gift.name;
+  els.giftPrice.value = gift.price;
+  els.giftStore.value = gift.store;
+  els.giftUrl.value = gift.url;
+  els.giftImage.value = gift.image || "";
+  els.giftNote.value = gift.note || "";
+  els.giftSubmitButton.textContent = "Save gift";
+  els.cancelEditButton.classList.remove("hidden");
+  els.giftName.focus();
+}
+
+function stopGiftEdit() {
+  editingGiftId = "";
+  els.giftForm.reset();
+  els.giftSubmitButton.textContent = "Add gift";
+  els.cancelEditButton.classList.add("hidden");
 }
 
 async function unlockOwner(event) {
@@ -648,11 +676,20 @@ els.ownerUsersList.addEventListener("click", async (event) => {
 });
 
 els.ownerGiftsList.addEventListener("click", async (event) => {
+  const editButton = event.target.closest(".edit-gift-button");
+  if (editButton && ownerSignedIn) {
+    startGiftEdit(editButton.dataset.id);
+    return;
+  }
+
   const button = event.target.closest(".delete-gift-button");
   if (!button || !ownerSignedIn) return;
 
   const giftId = button.dataset.id;
   state.gifts = state.gifts.filter((gift) => gift.id !== giftId);
+  if (editingGiftId === giftId) {
+    stopGiftEdit();
+  }
 
   saveLocalState();
   if (firebaseReady && rootRef) {
@@ -662,47 +699,40 @@ els.ownerGiftsList.addEventListener("click", async (event) => {
   renderOwnerLists();
 });
 
+els.cancelEditButton.addEventListener("click", stopGiftEdit);
+
 els.giftForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!ownerSignedIn) return;
 
+  const existingGift = state.gifts.find((item) => item.id === editingGiftId);
   const gift = {
-    id: crypto.randomUUID(),
+    id: existingGift?.id || crypto.randomUUID(),
     name: els.giftName.value.trim(),
     price: Number(els.giftPrice.value),
     store: els.giftStore.value.trim(),
     url: els.giftUrl.value.trim(),
     image: els.giftImage.value.trim(),
     note: els.giftNote.value.trim(),
-    bought: false,
-    boughtBy: "",
-    boughtByHash: "",
-    addedAt: Date.now()
+    bought: existingGift?.bought || false,
+    boughtBy: existingGift?.boughtBy || "",
+    boughtByHash: existingGift?.boughtByHash || "",
+    addedAt: existingGift?.addedAt || Date.now()
   };
 
-  state.gifts.push(gift);
+  if (existingGift) {
+    state.gifts = state.gifts.map((item) => (item.id === gift.id ? gift : item));
+  } else {
+    state.gifts.push(gift);
+  }
 
   saveLocalState();
   if (firebaseReady && rootRef) {
     await rootRef.child(`gifts/${gift.id}`).set(gift);
   }
-  els.giftForm.reset();
+  stopGiftEdit();
   render();
   renderOwnerLists();
-});
-
-els.resetButton.addEventListener("click", async () => {
-  if (!ownerSignedIn) return;
-  const users = state.users;
-  state = {
-    ...cloneSampleData(),
-    users
-  };
-  await saveState();
-  closeOwner();
-  if (currentUser()) {
-    enterApp();
-  }
 });
 
 startFirebase();
