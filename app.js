@@ -14,10 +14,10 @@ const sampleData = {
       url: "https://www.amazon.com/",
       image:
         "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=900&q=80",
-      occasion: "Birthday",
       note: "Any colorful marker set is fine. Alcohol markers are best.",
       bought: false,
       boughtBy: "",
+      boughtByHash: "",
       addedAt: Date.now() - 5000
     },
     {
@@ -28,10 +28,10 @@ const sampleData = {
       url: "https://www.target.com/",
       image:
         "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=900&q=80",
-      occasion: "Christmas",
       note: "Neutral colors or sage green would be great.",
       bought: false,
       boughtBy: "",
+      boughtByHash: "",
       addedAt: Date.now() - 4000
     },
     {
@@ -42,10 +42,10 @@ const sampleData = {
       url: "https://bookshop.org/",
       image:
         "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=900&q=80",
-      occasion: "Either",
       note: "Any amount works.",
       bought: false,
       boughtBy: "",
+      boughtByHash: "",
       addedAt: Date.now() - 3000
     }
   ]
@@ -106,7 +106,6 @@ const els = {
   giftStore: document.querySelector("#giftStore"),
   giftUrl: document.querySelector("#giftUrl"),
   giftImage: document.querySelector("#giftImage"),
-  giftOccasion: document.querySelector("#giftOccasion"),
   giftNote: document.querySelector("#giftNote"),
   resetButton: document.querySelector("#resetButton")
 };
@@ -316,7 +315,6 @@ function giftMatchesSearch(gift, search) {
   const haystack = [
     gift.name,
     gift.store,
-    gift.occasion,
     gift.note,
     money(gift.price)
   ]
@@ -341,7 +339,6 @@ function sortedGifts() {
       if (sort === "priceLow") return a.price - b.price;
       if (sort === "priceHigh") return b.price - a.price;
       if (sort === "alpha") return a.name.localeCompare(b.name);
-      if (sort === "occasion") return a.occasion.localeCompare(b.occasion);
       return b.addedAt - a.addedAt;
     });
 }
@@ -377,19 +374,31 @@ function render() {
         <div>${title}</div>
         <div class="price">${money(gift.price)}</div>
       </div>
-      <p class="meta">${escapeHtml(gift.store)} - ${escapeHtml(gift.occasion)}</p>
+      <p class="meta">${escapeHtml(gift.store)}</p>
       <p class="note">${escapeHtml(gift.note || "No extra notes.")}</p>
       <div class="gift-actions">
-        ${
-          gift.bought
-            ? `<span class="meta">Bought by ${escapeHtml(gift.boughtBy || "someone")}</span>`
-            : `<button class="secondary-button bought-button" type="button" data-id="${escapeHtml(gift.id)}">I bought this</button>`
-        }
+        ${renderGiftAction(gift)}
       </div>
     `;
 
     els.giftList.append(card);
   });
+}
+
+function renderGiftAction(gift) {
+  if (!gift.bought) {
+    return `<button class="secondary-button bought-button" type="button" data-id="${escapeHtml(gift.id)}">I bought this</button>`;
+  }
+
+  const boughtByCurrentUser = gift.boughtByHash && gift.boughtByHash === currentUserHash;
+  if (boughtByCurrentUser) {
+    return `
+      <span class="meta">Bought by you</span>
+      <button class="secondary-button unbuy-button" type="button" data-id="${escapeHtml(gift.id)}">Undo bought</button>
+    `;
+  }
+
+  return `<span class="meta">Bought by ${escapeHtml(gift.boughtBy || "someone")}</span>`;
 }
 
 function openBoughtDialog(giftId) {
@@ -408,14 +417,35 @@ async function markBought() {
 
   gift.bought = true;
   gift.boughtBy = `${user.name} (${user.relation})`;
+  gift.boughtByHash = currentUserHash;
   saveLocalState();
   if (firebaseReady && rootRef) {
     await rootRef.child(`gifts/${gift.id}`).update({
       bought: true,
-      boughtBy: gift.boughtBy
+      boughtBy: gift.boughtBy,
+      boughtByHash: currentUserHash
     });
   }
   render();
+}
+
+async function undoBought(giftId) {
+  const gift = state.gifts.find((item) => item.id === giftId);
+  if (!gift || gift.boughtByHash !== currentUserHash) return;
+
+  gift.bought = false;
+  gift.boughtBy = "";
+  gift.boughtByHash = "";
+  saveLocalState();
+  if (firebaseReady && rootRef) {
+    await rootRef.child(`gifts/${gift.id}`).update({
+      bought: false,
+      boughtBy: "",
+      boughtByHash: ""
+    });
+  }
+  render();
+  renderOwnerLists();
 }
 
 function showOwnerPanel() {
@@ -445,7 +475,7 @@ function renderOwnerLists() {
         row.innerHTML = `
           <div>
             <strong>${escapeHtml(user.name)}</strong>
-            <p>${escapeHtml(user.relation)} - PIN hidden</p>
+            <p>${escapeHtml(user.relation)} - PIN hidden - ${boughtCountForUser(user)} bought</p>
           </div>
           <button class="danger-button delete-user-button" type="button" data-id="${escapeHtml(user.pinHash)}">Delete user</button>
         `;
@@ -476,6 +506,13 @@ function renderOwnerLists() {
         els.ownerGiftsList.append(row);
       });
   }
+}
+
+function boughtCountForUser(user) {
+  const oldBoughtBy = `${user.name} (${user.relation})`;
+  return state.gifts.filter(
+    (gift) => gift.bought && (gift.boughtByHash === user.pinHash || gift.boughtBy === oldBoughtBy)
+  ).length;
 }
 
 async function unlockOwner(event) {
@@ -567,9 +604,16 @@ els.ownerDoneButton.addEventListener("click", closeOwner);
 els.ownerUnlockForm.addEventListener("submit", unlockOwner);
 
 els.giftList.addEventListener("click", (event) => {
-  const button = event.target.closest(".bought-button");
-  if (!button) return;
-  openBoughtDialog(button.dataset.id);
+  const boughtButton = event.target.closest(".bought-button");
+  if (boughtButton) {
+    openBoughtDialog(boughtButton.dataset.id);
+    return;
+  }
+
+  const unbuyButton = event.target.closest(".unbuy-button");
+  if (unbuyButton) {
+    undoBought(unbuyButton.dataset.id);
+  }
 });
 
 els.confirmBoughtButton.addEventListener("click", markBought);
@@ -629,10 +673,10 @@ els.giftForm.addEventListener("submit", async (event) => {
     store: els.giftStore.value.trim(),
     url: els.giftUrl.value.trim(),
     image: els.giftImage.value.trim(),
-    occasion: els.giftOccasion.value,
     note: els.giftNote.value.trim(),
     bought: false,
     boughtBy: "",
+    boughtByHash: "",
     addedAt: Date.now()
   };
 

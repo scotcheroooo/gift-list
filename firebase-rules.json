@@ -19,6 +19,9 @@
           },
           "boughtBy": {
             ".write": "newData.isString()"
+          },
+          "boughtByHash": {
+            ".write": "newData.isString()"
           }
         }
       }

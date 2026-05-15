@@ -23,7 +23,7 @@
             </div>
             <div>
               <span>2</span>
-              <p>Search or sort the list by price, name, occasion, or newest.</p>
+              <p>Search or sort the list by price, name, or newest.</p>
             </div>
             <div>
               <span>3</span>
@@ -50,6 +50,7 @@
             <label>
               Set a PIN
               <input id="newPin" inputmode="numeric" minlength="4" maxlength="12" placeholder="4 numbers or more" required>
+              <span class="field-help">Choose a PIN you will remember or write it down. It cannot be recovered after you set it.</span>
             </label>
             <button class="primary-button" type="submit">Enter the list</button>
           </form>
@@ -97,7 +98,7 @@
         <section class="controls" aria-label="List controls">
           <label class="search-wrap">
             Search gifts
-            <input id="searchInput" type="search" placeholder="Search by name, note, store, or occasion">
+            <input id="searchInput" type="search" placeholder="Search by name, note, or store">
           </label>
           <label>
             Sort
@@ -105,15 +106,14 @@
               <option value="priceLow">Price: lowest first</option>
               <option value="priceHigh">Price: highest first</option>
               <option value="alpha">Name: A to Z</option>
-              <option value="occasion">Occasion</option>
               <option value="newest">Newest added</option>
             </select>
           </label>
           <label>
             Show
             <select id="filterSelect">
-              <option value="available">Available gifts</option>
               <option value="all">All gifts</option>
+              <option value="available">Available gifts</option>
               <option value="bought">Bought gifts</option>
             </select>
           </label>
@@ -204,14 +204,6 @@
             <label>
               Picture link
               <input id="giftImage" type="url" placeholder="https://...">
-            </label>
-            <label>
-              Occasion
-              <select id="giftOccasion">
-                <option>Birthday</option>
-                <option>Christmas</option>
-                <option>Either</option>
-              </select>
             </label>
             <label class="wide">
               Notes
