@@ -1,0 +1,31 @@
+{
+  "rules": {
+    "giftList": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'J6HjVU3nXGWNxPLycFKOMEEvBIo2'",
+      "interests": {
+        ".write": "auth != null && auth.uid === 'J6HjVU3nXGWNxPLycFKOMEEvBIo2'"
+      },
+      "users": {
+        "$pinHash": {
+          ".write": "!data.exists() && newData.child('pinHash').val() === $pinHash && newData.child('name').isString() && newData.child('relation').isString()"
+        }
+      },
+      "gifts": {
+        "$giftId": {
+          ".write": "auth != null && auth.uid === 'J6HjVU3nXGWNxPLycFKOMEEvBIo2'",
+          "bought": {
+            ".write": "newData.isBoolean()"
+          },
+          "boughtBy": {
+            ".write": "newData.isString()"
+          }
+        }
+      }
+    },
+    "giftListSharedState": {
+      ".read": "auth != null && auth.uid === 'J6HjVU3nXGWNxPLycFKOMEEvBIo2'",
+      ".write": false
+    }
+  }
+}

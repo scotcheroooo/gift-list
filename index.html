@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gift List</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="welcomeScreen" class="welcome-grid">
+        <div class="intro-panel">
+          <p class="eyebrow">Birthday and Christmas ideas</p>
+          <h1>Gift List</h1>
+          <p class="lead">
+            Pick something from the list, open the store page, and come back here to mark it as bought.
+            Bought gifts get crossed out so nobody accidentally buys the same thing twice.
+          </p>
+          <div class="how-it-works" aria-label="How this works">
+            <div>
+              <span>1</span>
+              <p>Sign in with your name, relation, and a PIN you choose.</p>
+            </div>
+            <div>
+              <span>2</span>
+              <p>Search or sort the list by price, name, occasion, or newest.</p>
+            </div>
+            <div>
+              <span>3</span>
+              <p>Click a gift name to buy it, then mark it as bought here.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="signin-card" aria-live="polite">
+          <div class="tabs" role="tablist" aria-label="Sign in choices">
+            <button class="tab-button active" id="createTab" type="button">New account</button>
+            <button class="tab-button" id="returnTab" type="button">Use my PIN</button>
+          </div>
+
+          <form id="createForm" class="auth-form">
+            <label>
+              Your name
+              <input id="newName" autocomplete="name" placeholder="Example: Grandma" required>
+            </label>
+            <label>
+              Relation to me
+              <input id="newRelation" placeholder="Example: aunt, cousin, friend" required>
+            </label>
+            <label>
+              Set a PIN
+              <input id="newPin" inputmode="numeric" minlength="4" maxlength="12" placeholder="4 numbers or more" required>
+            </label>
+            <button class="primary-button" type="submit">Enter the list</button>
+          </form>
+
+          <form id="returnForm" class="auth-form hidden">
+            <label>
+              Your PIN
+              <input id="returnPin" inputmode="numeric" minlength="4" maxlength="12" placeholder="Enter your PIN" required>
+            </label>
+            <button class="primary-button" type="submit">Open my account</button>
+          </form>
+
+          <p id="authMessage" class="message"></p>
+        </div>
+      </section>
+
+      <section id="giftScreen" class="hidden">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Gift List</p>
+            <h2 id="helloText">Welcome</h2>
+          </div>
+          <div class="topbar-actions">
+            <span id="syncStatus" class="sync-status">Local draft</span>
+            <button id="ownerButton" class="secondary-button" type="button">Owner tools</button>
+            <button id="signOutButton" class="ghost-button" type="button">Sign out</button>
+          </div>
+        </header>
+
+        <section class="disclaimer-strip">
+          <p class="section-label">Quick note</p>
+          <p>
+            Not every item on this list is from a big retailer, company, or brand like Amazon.
+            I have checked the links and looked them over to make sure they are trustworthy places to buy from.
+          </p>
+        </section>
+
+        <section class="interest-strip">
+          <div>
+            <p class="section-label">Current interests</p>
+            <p id="interestText"></p>
+          </div>
+        </section>
+
+        <section class="controls" aria-label="List controls">
+          <label class="search-wrap">
+            Search gifts
+            <input id="searchInput" type="search" placeholder="Search by name, note, store, or occasion">
+          </label>
+          <label>
+            Sort
+            <select id="sortSelect">
+              <option value="priceLow">Price: lowest first</option>
+              <option value="priceHigh">Price: highest first</option>
+              <option value="alpha">Name: A to Z</option>
+              <option value="occasion">Occasion</option>
+              <option value="newest">Newest added</option>
+            </select>
+          </label>
+          <label>
+            Show
+            <select id="filterSelect">
+              <option value="available">Available gifts</option>
+              <option value="all">All gifts</option>
+              <option value="bought">Bought gifts</option>
+            </select>
+          </label>
+        </section>
+
+        <p id="resultCount" class="result-count"></p>
+        <section id="giftList" class="gift-list" aria-label="Gift ideas"></section>
+      </section>
+
+      <dialog id="buyDialog" class="modal">
+        <form method="dialog">
+          <h3>Mark this as bought?</h3>
+          <p id="buyDialogText"></p>
+          <div class="modal-actions">
+            <button value="cancel" class="ghost-button">Cancel</button>
+            <button id="confirmBoughtButton" value="confirm" class="primary-button">Yes, I bought it</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog id="ownerDialog" class="modal owner-modal">
+        <form id="ownerUnlockForm" class="owner-unlock">
+          <h3>Owner tools</h3>
+          <p>Use your owner email and password to add gifts, update the interest note, or reset demo data.</p>
+          <label>
+            Owner email
+            <input id="ownerEmailInput" type="email" autocomplete="email" placeholder="you@example.com" required>
+          </label>
+          <label>
+            Owner password
+            <input id="ownerPasswordInput" type="password" autocomplete="current-password" required>
+          </label>
+          <div class="modal-actions">
+            <button id="ownerCloseButton" class="ghost-button" type="button">Close</button>
+            <button class="primary-button" type="submit">Unlock</button>
+          </div>
+          <p id="ownerMessage" class="message"></p>
+        </form>
+
+        <div id="ownerPanel" class="owner-panel hidden">
+          <div class="owner-header">
+            <div>
+              <h3>Owner tools</h3>
+              <p>Add a gift once and it appears in the sorted list automatically.</p>
+            </div>
+            <button id="ownerDoneButton" class="ghost-button" type="button">Done</button>
+          </div>
+
+          <label>
+            Interest note
+            <textarea id="ownerInterest" rows="3"></textarea>
+          </label>
+          <button id="saveInterestButton" class="secondary-button" type="button">Save interest note</button>
+
+          <form id="giftForm" class="gift-form">
+            <label>
+              Gift name
+              <input id="giftName" required placeholder="Example: art markers">
+            </label>
+            <label>
+              Price
+              <input id="giftPrice" required type="number" min="0" step="0.01" placeholder="24.99">
+            </label>
+            <label>
+              Store or website
+              <input id="giftStore" required placeholder="Example: Target">
+            </label>
+            <label>
+              Buying link
+              <input id="giftUrl" required type="url" placeholder="https://...">
+            </label>
+            <label>
+              Picture link
+              <input id="giftImage" type="url" placeholder="https://...">
+            </label>
+            <label>
+              Occasion
+              <select id="giftOccasion">
+                <option>Birthday</option>
+                <option>Christmas</option>
+                <option>Either</option>
+              </select>
+            </label>
+            <label class="wide">
+              Notes
+              <textarea id="giftNote" rows="2" placeholder="Size, color, exact version, or anything helpful"></textarea>
+            </label>
+            <button class="primary-button wide" type="submit">Add gift</button>
+          </form>
+
+          <button id="resetButton" class="danger-button" type="button">Reset sample data</button>
+        </div>
+      </dialog>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
